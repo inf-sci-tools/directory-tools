@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExifTool Folder Reporter</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <p class="eyebrow">Local browser tool · version <span id="version">not loaded</span></p>
+      <h1>ExifTool Folder Reporter</h1>
+      <p class="lead">Select a local exercise folder and generate a directory tree plus ExifTool metadata reports. Files are processed in the browser and are not uploaded.</p>
+    </header>
+
+    <section class="card">
+      <h2>1. Choose folder</h2>
+      <p>Use Chrome, Edge, Safari, or a recent Firefox build. On some systems, opening this file by double-clicking is enough. If the ExifTool engine fails to load, use the included local-server fallback in the README.</p>
+      <label class="filebox">
+        <span>Choose exercise folder</span>
+        <input id="folderInput" type="file" webkitdirectory directory multiple />
+      </label>
+      <p id="summary" class="summary">No folder selected.</p>
+    </section>
+
+    <section class="card grid2">
+      <div>
+        <h2>2. Processing limits</h2>
+        <label>Maximum files to process with ExifTool
+          <input id="maxFiles" type="number" min="1" max="5000" step="1" value="300" />
+        </label>
+        <label>Maximum individual file size, MB
+          <input id="maxSizeMb" type="number" min="1" max="2000" step="1" value="50" />
+        </label>
+        <label class="check"><input id="includeTextReport" type="checkbox" checked /> Generate human-readable text report</label>
+        <label class="check"><input id="includeAllFiles" type="checkbox" checked disabled /> Always generate tree and manifest for all selected files</label>
+      </div>
+      <div>
+        <h2>ExifTool flags</h2>
+        <p>The JSON/CSV report uses:</p>
+        <code id="argDisplay"></code>
+        <p class="hint">These flags include duplicate tags, unknown tags, group names, raw tag names and numeric values.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Run report</h2>
+      <div class="buttons">
+        <button id="runBtn" disabled>Run ExifTool report</button>
+        <button id="cancelBtn" disabled class="secondary">Cancel</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </div>
+      <div id="status" class="status" data-tone="error">JavaScript has not started. If this message remains after the page loads, the runnable app file is missing or blocked. Use the distribution ZIP, not the source ZIP.</div>
+      <progress id="progress" value="0" max="100"></progress>
+      <p id="progressText" class="hint">No files selected</p>
+    </section>
+
+    <section class="card">
+      <h2>4. Download outputs</h2>
+      <div class="buttons wrapbuttons">
+        <button id="downloadZipBtn" disabled>Download all reports as ZIP</button>
+        <button id="downloadTreeBtn" disabled class="secondary">tree.txt</button>
+        <button id="downloadManifestBtn" disabled class="secondary">file-manifest.csv</button>
+        <button id="downloadJsonBtn" disabled class="secondary">metadata.json</button>
+        <button id="downloadCsvBtn" disabled class="secondary">metadata.csv</button>
+        <button id="downloadTxtBtn" disabled class="secondary">report.txt</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Preview</h2>
+      <pre id="preview">Select a folder to preview its tree structure.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Diagnostics</h2>
+      <p class="hint">This section is mainly for debugging student/browser problems. If it says JavaScript loaded and selected files are visible, the folder selection stage worked.</p>
+      <pre id="diagnostics">JavaScript has not loaded yet.</pre>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
