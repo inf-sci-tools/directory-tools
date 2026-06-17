@@ -1,4 +1,4 @@
-ExifTool Folder Reporter v1.2.0
+ExifTool Folder Reporter v1.2.1
 ===============================
 
 Purpose
@@ -13,6 +13,8 @@ This is a local browser tool for student exercises. Students select a folder and
 - one ZIP bundle containing the above files
 
 Files are processed by the browser. The tool does not upload files to any server. Chrome/Firefox may use the word "upload" in the folder-permission dialog, but in this local tool it means "make the selected local files available to this web page".
+
+Filtering change in v1.2.1: macOS .DS_Store files are ignored at folder-selection time, so they are excluded from ExifTool processing, tree output, the file manifest and all reports.
 
 Packaging change in v1.2.0: zeroperl.wasm is kept as a separate runtime asset instead of being inlined into app.js. This keeps app.js small and inspectable. Keep index.html, app.js, style.css and zeroperl.wasm in the same folder.
 

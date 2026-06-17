@@ -4,7 +4,7 @@ A static browser tool for generating a directory tree, file manifest, and ExifTo
 
 ## Privacy
 
-Files are processed **locally** in the user's browser. The tool is designed **not to upload selected files to a server**. Some browsers will use default wording such as "upload" when selecting a folder; here that means making the selected local files available to the page.
+Files are processed in the browser. The app is designed not to upload selected files to a server. Some browsers use wording such as "upload" when selecting a folder; here that means making the selected local files available to the page.
 
 ## Use
 
@@ -24,13 +24,9 @@ Files are processed **locally** in the user's browser. The tool is designed **no
 
 Keep `index.html`, `app.js`, `style.css`, and `zeroperl.wasm` in the same folder.
 
-## Easiest use case - GitHub Pages
-
-Easiest use is accessing the GitHub Pages hosted index.html file in the repository root.
-
 ## Local Use
 
-For best results, download the repo and before opening index.html, from the command line run a tiny local server from the folder in which these repo files are contained:
+For best results, run a tiny local server from this folder:
 
 ```bash
 python3 -m http.server 8000
@@ -48,5 +44,12 @@ On Windows, use:
 py -m http.server 8000
 ```
 
+## GitHub Pages
 
+Put these files in the repository root and enable GitHub Pages from the main branch root. The empty `.nojekyll` file tells GitHub Pages to serve the files as static assets.
 
+## Version
+
+v1.2.1 ignores macOS `.DS_Store` files at folder-selection time, so they are excluded from ExifTool processing, tree output, the file manifest, and all generated reports.
+
+v1.2.0 separated the WebAssembly runtime into `zeroperl.wasm`, reducing `app.js` from about 33 MB to about 156 KB while retaining the same report-generation behaviour.
