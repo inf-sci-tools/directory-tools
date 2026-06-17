@@ -1,7 +1,7 @@
 import { parseMetadata, dispose as disposeExifTool } from '@uswriting/exiftool';
 import { zipSync, strToU8 } from 'fflate';
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const DEFAULT_ARGS = ['-json', '-a', '-u', '-G1', '-s', '-n'];
 const TEXT_ARGS = ['-a', '-u', '-G1', '-s', '-n'];
 
@@ -119,6 +119,7 @@ function selectedFilesFromInput(input) {
   return Array.from(input.files || [])
     .map((file) => ({ file, path: normalisePath(file) }))
     .filter((entry) => entry.path)
+    .filter((entry) => !entry.path.split('/').includes('.DS_Store'))
     .sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: 'base' }));
 }
 
