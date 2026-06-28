@@ -9,9 +9,9 @@
 <body>
   <main class="wrap">
     <header>
-      <p class="eyebrow">Web browser tool · version <span id="version">not loaded</span></p>
+      <p class="eyebrow">Local browser tool · version <span id="version">not loaded</span></p>
       <h1>ExifTool Folder Reporter</h1>
-      <p class="lead">Select a local directory/folder and generate a directory tree plus ExifTool metadata reports. Files are <b>processed locally in the browser and are not uploaded to an external server</b>.</p>
+      <p class="lead">Select a local exercise folder and generate a directory tree plus ExifTool metadata reports. Files are processed in the browser and are not uploaded.</p>
     </header>
 
     <section class="card">
@@ -38,9 +38,9 @@
       </div>
       <div>
         <h2>ExifTool flags</h2>
-        <p>The JSON/CSV report uses:</p>
+        <p>ExifTool is run with exactly this optional argument:</p>
         <code id="argDisplay"></code>
-        <p class="hint">These flags include duplicate tags, unknown tags, group names, raw tag names and numeric values.</p>
+        <p class="hint">The app asks ExifTool for CSV output only. Metadata extraction otherwise uses ExifTool defaults.</p>
       </div>
     </section>
 
@@ -75,7 +75,7 @@
 
     <section class="card">
       <h2>Diagnostics</h2>
-      <p class="hint">This section is mainly for debugging any problems.</p>
+      <p class="hint">This section is mainly for debugging student/browser problems. If it says JavaScript loaded and selected files are visible, the folder selection stage worked.</p>
       <pre id="diagnostics">JavaScript has not loaded yet.</pre>
     </section>
   </main>

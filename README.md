@@ -1,10 +1,10 @@
 # ExifTool Folder Reporter
 
-A static browser tool for generating a directory tree, file manifest, and ExifTool-style metadata reports from a user-selected folder.
+A static browser tool for generating a directory tree, file manifest, and ExifTool CSV metadata report from a user-selected folder.
 
 ## Privacy
 
-Files are processed **locally in the browser**. The app is designed **not to upload selected files to a server**. Some browsers use default wording in pop-up messages such as "upload" when selecting a folder; here that means making the selected local files available to the web page.
+Files are processed **locally in the browser**. The app is designed **not to upload selected files to a server**. Some browsers use default wording such as "upload" when selecting a folder; here that means making the selected local files available to the web page.
 
 ## Use
 
@@ -13,6 +13,16 @@ Files are processed **locally in the browser**. The app is designed **not to upl
 3. Select the folder for analysis.
 4. Click **Run ExifTool report**.
 5. Download the generated report ZIP.
+
+## ExifTool mode
+
+Version 1.3.0 supplies only one optional argument to ExifTool:
+
+```text
+-csv
+```
+
+The app parses ExifTool's per-file CSV output and merges the rows into one `exiftool-metadata.csv` file.
 
 ## Files
 
@@ -24,14 +34,9 @@ Files are processed **locally in the browser**. The app is designed **not to upl
 
 Keep `index.html`, `app.js`, `style.css`, and `zeroperl.wasm` in the same folder.
 
-## Easiest use case - GitHub Pages
+## Local use
 
-The easiest way to access the tool is via the GitHub Pages hosted version: https://inf-sci-tools.github.io/directory-tools/
-
-
-## Local Use
-
-For best results, you can download the repo files, and from within the folder, use the command line/terminal to run a tiny local server from this folder:
+For best results, run a tiny local server from this folder:
 
 ```bash
 python3 -m http.server 8000
@@ -48,5 +53,3 @@ On Windows, use:
 ```powershell
 py -m http.server 8000
 ```
-
-
