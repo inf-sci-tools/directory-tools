@@ -1,7 +1,7 @@
 import { parseMetadata, dispose as disposeExifTool } from '@uswriting/exiftool';
 import { zipSync, strToU8 } from 'fflate';
 
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const EXIFTOOL_ARGS = ['-csv'];
 
 const $ = (id) => document.getElementById(id);
@@ -279,22 +279,59 @@ function parseExifToolCsv(text) {
   });
 }
 
-function flattenMetadataRows(records) {
-  const keys = new Set(['RelativePath', 'ExifToolStatus', 'ExifToolError']);
-  for (const rec of records) {
-    for (const k of Object.keys(rec.metadata || {})) keys.add(k);
-  }
-  const columns = Array.from(keys);
-  const rows = [columns];
-  for (const rec of records) {
-    const row = [];
-    for (const col of columns) {
-      if (col === 'RelativePath') row.push(rec.relativePath);
-      else if (col === 'ExifToolStatus') row.push(rec.success ? 'success' : 'error');
-      else if (col === 'ExifToolError') row.push(rec.error || '');
-      else row.push(formatValue(rec.metadata?.[col]));
+function pathDirectory(path) {
+  const parts = String(path || '').split('/').filter(Boolean);
+  if (parts.length <= 1) return '.';
+  return parts.slice(0, -1).join('/');
+}
+
+function pathFileName(path) {
+  const parts = String(path || '').split('/').filter(Boolean);
+  return parts.length ? parts.at(-1) : '';
+}
+
+function normaliseExifToolCsvRecord(metadata, relativePath) {
+  const record = { ...(metadata || {}) };
+
+  // ExifTool -csv -r DIR reports filesystem-derived columns such as
+  // SourceFile, Directory and FileName. In the browser, ExifTool only sees a
+  // File object, not the original local directory tree. Restore those values
+  // from File.webkitRelativePath so the output behaves like recursive ExifTool
+  // directory mode.
+  record.SourceFile = relativePath;
+  record.Directory = pathDirectory(relativePath);
+  record.FileName = pathFileName(relativePath);
+
+  return record;
+}
+
+function makeExifToolMetadataCsv(records) {
+  const successful = records.filter((rec) => rec.success);
+  const keys = new Set();
+  for (const rec of successful) {
+    for (const k of Object.keys(rec.metadata || {})) {
+      if (k !== 'SourceFile') keys.add(k);
     }
-    rows.push(row);
+  }
+
+  // Native ExifTool -csv output places SourceFile first and otherwise uses
+  // ExifTool's default tag-description headings. Sorting the remaining columns
+  // gives a stable wide CSV very close to a single command-line run over a
+  // directory, while still allowing us to merge one-file-at-a-time browser runs.
+  const columns = ['SourceFile', ...Array.from(keys).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))];
+  const rows = [columns];
+
+  for (const rec of successful) {
+    rows.push(columns.map((col) => formatValue(rec.metadata?.[col])));
+  }
+
+  return csvString(rows);
+}
+
+function makeProcessingIssuesCsv(records) {
+  const rows = [['RelativePath', 'Status', 'Message']];
+  for (const rec of records) {
+    if (!rec.success) rows.push([rec.relativePath, 'error_or_skipped', rec.error || 'Unknown error']);
   }
   return csvString(rows);
 }
@@ -355,8 +392,8 @@ async function runExifTool(files, { maxFiles, maxSizeBytes, includeTextReport })
         transform: parseExifToolCsv,
       });
       if (result.success) {
-        const metadata = Array.isArray(result.data) ? (result.data[0] || {}) : {};
-        metadata.SourceFile = path;
+        const rawMetadata = Array.isArray(result.data) ? (result.data[0] || {}) : {};
+        const metadata = normaliseExifToolCsvRecord(rawMetadata, path);
         records.push({ relativePath: path, success: true, metadata });
       } else {
         records.push({ relativePath: path, success: false, metadata: {}, error: result.error || 'ExifTool returned an error' });
@@ -398,10 +435,11 @@ async function runExifTool(files, { maxFiles, maxSizeBytes, includeTextReport })
     records,
   }, null, 2);
 
-  const metadataCsv = flattenMetadataRows(records);
+  const metadataCsv = makeExifToolMetadataCsv(records);
+  const processingIssuesCsv = makeProcessingIssuesCsv(records);
   const textReport = includeTextReport ? makeTextReport(records) : 'Text report disabled. JSON and CSV reports were generated.\n';
 
-  return { treeTxt, manifestCsv, metadataJson, metadataCsv, textReport, records, skippedOversize, skippedLimit };
+  return { treeTxt, manifestCsv, metadataJson, metadataCsv, processingIssuesCsv, textReport, records, skippedOversize, skippedLimit };
 }
 
 function downloadText(filename, text, type = 'text/plain;charset=utf-8') {
@@ -426,6 +464,7 @@ function buildZipBlob(reports) {
     'file-manifest.csv': strToU8(reports.manifestCsv),
     'exiftool-metadata.json': strToU8(reports.metadataJson),
     'exiftool-metadata.csv': strToU8(reports.metadataCsv),
+    'exiftool-processing-issues.csv': strToU8(reports.processingIssuesCsv),
     'exiftool-report.txt': strToU8(reports.textReport),
     'README.txt': strToU8(readmeText()),
   }, { level: 6 });
