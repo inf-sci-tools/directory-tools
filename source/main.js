@@ -1,9 +1,8 @@
 import { parseMetadata, dispose as disposeExifTool } from '@uswriting/exiftool';
 import { zipSync, strToU8 } from 'fflate';
 
-const VERSION = '1.2.1';
-const DEFAULT_ARGS = ['-json', '-a', '-u', '-G1', '-s', '-n'];
-const TEXT_ARGS = ['-a', '-u', '-G1', '-s', '-n'];
+const VERSION = '1.3.0';
+const EXIFTOOL_ARGS = ['-csv'];
 
 const $ = (id) => document.getElementById(id);
 
@@ -58,7 +57,7 @@ const els = {
   version: $('version'),
 };
 
-els.argDisplay.textContent = DEFAULT_ARGS.join(' ');
+els.argDisplay.textContent = EXIFTOOL_ARGS.join(' ');
 els.version.textContent = VERSION;
 
 function updateDiagnostics(extra = '') {
@@ -220,6 +219,66 @@ function csvCell(value) {
   return s;
 }
 
+function parseCsvRows(text) {
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i += 1;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cell += ch;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      row.push(cell);
+      cell = '';
+    } else if (ch === '\n') {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+    } else if (ch === '\r') {
+      // Ignore CR in CRLF line endings.
+    } else {
+      cell += ch;
+    }
+  }
+
+  if (cell.length || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+
+  return rows.filter((csvRow) => csvRow.some((value) => value !== ''));
+}
+
+function parseExifToolCsv(text) {
+  const rows = parseCsvRows(String(text || ''));
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map((row) => {
+    const record = {};
+    headers.forEach((header, index) => {
+      if (header) record[header] = row[index] ?? '';
+    });
+    return record;
+  });
+}
+
 function flattenMetadataRows(records) {
   const keys = new Set(['RelativePath', 'ExifToolStatus', 'ExifToolError']);
   for (const rec of records) {
@@ -252,7 +311,7 @@ function makeTextReport(records) {
   lines.push(`ExifTool folder metadata report`);
   lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push(`Tool package: ExifTool-in-WebAssembly via @uswriting/exiftool`);
-  lines.push(`ExifTool arguments: ${DEFAULT_ARGS.join(' ')}`);
+  lines.push(`ExifTool arguments: ${EXIFTOOL_ARGS.join(' ')}`);
   lines.push('');
   for (const rec of records) {
     lines.push('='.repeat(78));
@@ -292,11 +351,11 @@ async function runExifTool(files, { maxFiles, maxSizeBytes, includeTextReport })
     setStatus(`Running ExifTool on ${path}`, 'info');
     try {
       const result = await parseMetadata(file, {
-        args: DEFAULT_ARGS,
-        transform: (data) => JSON.parse(data),
+        args: EXIFTOOL_ARGS,
+        transform: parseExifToolCsv,
       });
       if (result.success) {
-        const metadata = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+        const metadata = Array.isArray(result.data) ? (result.data[0] || {}) : {};
         metadata.SourceFile = path;
         records.push({ relativePath: path, success: true, metadata });
       } else {
@@ -330,7 +389,7 @@ async function runExifTool(files, { maxFiles, maxSizeBytes, includeTextReport })
     generatedAt: new Date().toISOString(),
     tool: 'ExifTool Folder Reporter',
     version: VERSION,
-    exiftoolArgs: DEFAULT_ARGS,
+    exiftoolArgs: EXIFTOOL_ARGS,
     selectedRoot: state.rootName,
     totalFilesInFolder: files.length,
     processedFiles: selected.length,
@@ -374,7 +433,7 @@ function buildZipBlob(reports) {
 }
 
 function readmeText() {
-  return `ExifTool Folder Reporter output\n\nFiles generated:\n- tree.txt: directory tree structure generated from browser folder selection.\n- file-manifest.csv: browser-visible file list, sizes, MIME hints and last-modified dates.\n- exiftool-metadata.json: full ExifTool JSON records.\n- exiftool-metadata.csv: wide CSV table created from ExifTool records.\n- exiftool-report.txt: human-readable tag listing.\n\nThe browser page processes files locally. It does not upload files.\n`;
+  return `ExifTool Folder Reporter output\n\nFiles generated:\n- tree.txt: directory tree structure generated from browser folder selection.\n- file-manifest.csv: browser-visible file list, sizes, MIME hints and last-modified dates.\n- exiftool-metadata.json: parsed records derived from ExifTool -csv output.\n- exiftool-metadata.csv: single merged CSV table created from ExifTool -csv output for each processed file.\n- exiftool-report.txt: human-readable tag listing.\n\nThe browser page processes files locally. It does not upload files.\n`;
 }
 
 function enableDownloads(on) {
