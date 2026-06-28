@@ -16,13 +16,13 @@ Files are processed **locally in the browser**. The app is designed **not to upl
 
 ## ExifTool mode
 
-Version 1.3.0 supplies only one optional argument to ExifTool:
+Version 1.4.0 supplies only one optional argument to ExifTool:
 
 ```text
 -csv
 ```
 
-The app parses ExifTool's per-file CSV output and merges the rows into one `exiftool-metadata.csv` file.
+The app parses ExifTool's per-file CSV output and merges the successful rows into one `exiftool-metadata.csv` file. Files that error or are skipped are reported separately in `exiftool-processing-issues.csv`.
 
 ## Files
 
@@ -53,3 +53,8 @@ On Windows, use:
 ```powershell
 py -m http.server 8000
 ```
+
+
+Output note
+-----------
+`exiftool-metadata.csv` is intentionally kept close to `exiftool -csv -r DIR` output: SourceFile is first; other columns use ExifTool default tag-description headings. Files that error or are skipped are listed separately in `exiftool-processing-issues.csv` rather than being inserted as non-ExifTool columns into the metadata CSV.
